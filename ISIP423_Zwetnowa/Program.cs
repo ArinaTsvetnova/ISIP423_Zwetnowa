@@ -39,7 +39,7 @@ switch (e)
             if (d[i] < d[i + 1])
             { 
               Swap<int>(ref d[i], ref d[i + 1]);
-              Swap<string>(ref c[i], ref c[i + 1])
+              Swap<string>(ref c[i], ref c[i + 1]);
             }
           Console.WriteLine(c[i],d[i]);
         }
@@ -79,5 +79,5 @@ static void Swap<T>(ref T lhs, ref T rhs)
   T temp;
   temp = lhs;
   lhs = rhs;
-  rhs = tenp;
+  rhs = temp;
 }
