@@ -1,83 +1,109 @@
-using System.Globalization;
-using static System.Net.Mime.MediaTypeNames;
+using System.Text.RegularExpressions;
 
-int a = Convert.ToInt32(Console.ReadLine());
-int q = 0;
-string[] c = new string[40];
-int[] d = new int[40];
-for (int i = 0; i < a; i++)
-{ 
-    string b = Console.ReadLine();
-    string[] u = b.Split(new char[] { ';' });
-    c[i] = u[0];
-    d[i] = Convert.ToInt32(u[1]);
-}
-
-Console.WriteLine("");
-int e = Convert.ToInt32(Console.ReadLine());
-switch (e)
+class Program
 {
-    case 1:
-        Console.WriteLine("Вы выбрали опцию 1");
-        for (int j = 0; j < a; j++)
-        { 
-            Console.WriteLine(c[j], d[j]);
-        }
-        break; 
-    case 2:
-        Console.WriteLine(d.Max());
-        Console.WriteLine(d.Min());
-        for (int i = 0; i < a; i++)
+    private static List<TextStats> allStats = new List<TextStats>();
+
+    static void Main()
+    {
+        bool continueWork = true;
+
+        while (continueWork)
         {
-            q += i;
-            Console.WriteLine(q/a);
-        }
-        break;
-    case 3:
-        for (int i = 0; i < a; i++)
-        {
-            if (d[i] < d[i + 1])
-            { 
-              Swap<int>(ref d[i], ref d[i + 1]);
-              Swap<string>(ref c[i], ref c[i + 1]);
-            }
-          Console.WriteLine(c[i],d[i]);
-        }
-        break;
-    case 4:
-        Console.WriteLine("Введите курс валюты");
-        int kurs = Convert.ToInt32(Console.ReadLine());
-        int[] g = new int[40];
-        for (int i = 0; i < a; i++)
-        {
-            g[i] = d[i] * kurs;
-            Console.WriteLine(g[i]);
-        }
-        break;
-    case 5:
-        Console.WriteLine("Введите товар или услугу:");
-        string? word = Console.ReadLine();
-        word = word.ToLower();
-        for (int j = 0; j < 6; j++)
-        {
-            int indexOfChar = c[j].IndexOf(word);
-            if (indexOfChar >= 0)
+            Console.WriteLine("Введите текст (минимум 100 символов):");
+            string text = Console.ReadLine();
+
+            if (text.Length < 100)
             {
-                Console.WriteLine(c[j], d[j]);
+                Console.WriteLine("Текст слишком короткий! Повторите ввод.");
+                continue;
+            }
+
+            TextStats stats = ProcessText(text);
+            allStats.Add(stats);
+
+            Console.WriteLine("\nРезультаты анализа:");
+            Console.WriteLine($"Количество слов: {stats.WordCount}");
+            Console.WriteLine($"Самое короткое слово: {stats.ShortestWord}");
+            Console.WriteLine($"Количество предложений: {stats.SentenceCount}");
+            Console.WriteLine($"Гласных: {stats.VowelsCount}, Согласных: {stats.ConsonantsCount}");
+            Console.WriteLine($"Самое длинное слово: {stats.LongestWord}");
+            Console.WriteLine("Частота букв:");
+            foreach (var item in stats.LetterFrequency)
+            {
+                Console.WriteLine($"{item.Key}: {item.Value}");
+            }
+
+            Console.WriteLine("\nПродолжить работу? (y/n)");
+            string answer = Console.ReadLine().ToLower();
+            continueWork = answer == "y";
+        }
+
+        Console.WriteLine("\nСтатистика по всем обработанным текстам:");
+        for (int i = 0; i < allStats.Count; i++)
+        {
+            Console.WriteLine($"Текст {i + 1}:");
+            Console.WriteLine($"Количество слов: {allStats[i].WordCount}");
+            Console.WriteLine($"Количество предложений: {allStats[i].SentenceCount}");
+            Console.WriteLine($"------------------------");
+        }
+    }
+
+    private class TextStats
+    {
+        public int WordCount { get; set; }
+        public string ShortestWord { get; set; }
+        public int SentenceCount { get; set; }
+        public int VowelsCount { get; set; }
+        public int ConsonantsCount { get; set; }
+        public string LongestWord { get; set; }
+        public Dictionary<char, int> LetterFrequency { get; set; }
+    }
+
+    private static TextStats ProcessText(string text)
+    {
+        TextStats stats = new TextStats
+        {
+            LetterFrequency = new Dictionary<char, int>()
+        };
+
+        // Подсчёт предложений
+        stats.SentenceCount = Regex.Matches(text, @"[^\.!\?]+[\.!\?]").Count;
+
+        // Обработка слов
+        string[] words = Regex.Split(text, @"\W+")
+            .Where(w => !string.IsNullOrEmpty(w))
+            .ToArray();
+
+        stats.WordCount = words.Length;
+        stats.ShortestWord = words.OrderBy(w => w.Length).FirstOrDefault() ?? "";
+        stats.LongestWord = words.OrderByDescending(w => w.Length).FirstOrDefault() ?? "";
+
+        // Подсчёт гласных и согласных
+        string vowels = "ауоыиэяюёеАУОЫИЭЯЮЁЕ";
+        string consonants = "бвгджзйклмнпрстфхцчшщБВГДЖЗЙКЛМНПРСТФХЦЧШЩ";
+
+        foreach (char c in text)
+        {
+            if (vowels.Contains(c))
+                stats.VowelsCount++;
+            else if (consonants.Contains(c))
+                stats.ConsonantsCount++;
+
+            if (char.IsLetter(c))
+            {
+                char lowerC = char.ToLower(c);
+                if (stats.LetterFrequency.ContainsKey(lowerC))
+                {
+                    stats.LetterFrequency[lowerC]++;
+                }
+                else
+                {
+                    stats.LetterFrequency.Add(lowerC, 1);
+                }
             }
         }
-        break;
-    case 0:
-        break;
-    default:
-        Console.WriteLine("Error");
-        break;
-}
 
-static void Swap<T>(ref T lhs, ref T rhs)
-{
-  T temp;
-  temp = lhs;
-  lhs = rhs;
-  rhs = temp;
+        return stats;
+    }
 }
